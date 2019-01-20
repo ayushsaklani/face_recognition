@@ -33,7 +33,9 @@ parser.add_argument('--networkModel', type=str, help="Path to Torch network mode
 parser.add_argument('--imgDim', type=int,
                     help="Default image dimension.", default=96)
 
-parser.add_argument('-v','--vid',type = str, help = "Path to video file")
+parser.add_argument('-i','--img',type = str, help = "Path to image file")
+
+parser.add_argument('-o','--out',type = str, help = "Path to output where you want the output")
 
 parser.add_argument('--verbose', action='store_true')
 
@@ -53,43 +55,31 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 net = openface.TorchNeuralNet(args.networkModel)
 detector = dlib.get_frontal_face_detector()
 
-cap = cv2.VideoCapture(args.vid)
+# load image
+frame = cv2.imread(args.img)
 
+font = cv2.FONT_HERSHEY_SIMPLEX
 
-while(True):
-    # Capture frame-by-frame
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    ret, frame = cap.read()
-    frame = imutils.resize(frame, width=500)
-    # Our operations on the frame come here
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    rects = detector(gray,1)
+gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+rects = detector(gray,1)
 
-    bbs = align.getAllFaceBoundingBoxes(frame)
+bbs = align.getAllFaceBoundingBoxes(frame)
+
+for (i, bb) in enumerate(bbs):
+    alignedFace = align.align(96, frame, bb,
+                                  landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
+    embedding = net.forward(alignedFace)
+    name = face_utils.who_is_it(face_database,embedding)
     
-    for (i, bb) in enumerate(bbs):
-        #cv2.imshow("frame",rect)
-        #embedding = embedding(rect)
-        alignedFace = align.align(96, frame, bb,
-                                      landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-        embedding = net.forward(alignedFace)
-        name = face_utils.who_is_it(face_database,embedding)
-        
-        (x,y,w,h) = face_utils.rect_to_bb(bb)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
-        cv2.putText(frame, name, (x, y + h), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
-        
-        #out.write(frame)
-        cv2.imshow('frame',frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    
-    
-
-
-    
-# When everything done, release the capture
-cap.release()
-# out.release()
+    (x,y,w,h) = face_utils.rect_to_bb(bb)
+    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+    cv2.putText(frame, name, (x, y + h), font, 3, (255, 255, 255), 2, cv2.LINE_AA)
+cv2.imwrite(args.out,frame)
+frame = cv2.resize(frame,(800,600))    
+cv2.imshow('frame',frame)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+
+    
 
