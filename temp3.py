@@ -64,21 +64,10 @@ gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 rects = detector(gray,1)
 
 bbs = align.getAllFaceBoundingBoxes(frame)
-for (i, bb) in enumerate(bbs):
-    alignedFace = align.align(96, frame, bb,
-                                  landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-    embedding = net.forward(alignedFace)
-    name = face_utils.who_is_it(face_database,embedding)
-    
-    (x,y,w,h) = face_utils.rect_to_bb(bb)
-    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
-    cv2.putText(frame, name, (x, y + h), font, 3, (255, 255, 255), 2, cv2.LINE_AA)
-cv2.imwrite(args.out,frame)
-frame = cv2.resize(frame,(800,600))    
-cv2.imshow('frame',frame)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
+if not bbs:
+    print("empty")
+else:
+    print(bbs)
 
     
 

@@ -35,6 +35,9 @@ parser.add_argument('--imgDim', type=int,
 
 parser.add_argument('-v','--vid',type = str, help = "Path to video file")
 
+parser.add_argument('-ti','--temp_img',type = str, help = "path to temp image folder ",
+                    default = '.temp')
+
 parser.add_argument('--verbose', action='store_true')
 
 
@@ -53,43 +56,39 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 net = openface.TorchNeuralNet(args.networkModel)
 detector = dlib.get_frontal_face_detector()
 
-cap = cv2.VideoCapture(args.vid)
 
+face_utils.video_to_images(args.vid)
 
-while(True):
-    # Capture frame-by-frame
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    ret, frame = cap.read()
-    frame = imutils.resize(frame, width=500)
-    # Our operations on the frame come here
+images = len(os.listdir(os.path.join(args.temp_img,'images')))
+font = cv2.FONT_HERSHEY_SIMPLEX
+print("no of images {}",format(images))
+for f_no in range(0,images):
+    frame = cv2.imread(os.path.join(os.path.join(args.temp_img,'images'),'frame'+str(f_no)+'.jpg'))
+    print(f_no)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     rects = detector(gray,1)
 
     bbs = align.getAllFaceBoundingBoxes(frame)
     
-    for (i, bb) in enumerate(bbs):
-        #cv2.imshow("frame",rect)
-        #embedding = embedding(rect)
-        alignedFace = align.align(96, frame, bb,
-                                      landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-        embedding = net.forward(alignedFace)
-        name = face_utils.who_is_it(face_database,embedding)
-        
-        (x,y,w,h) = face_utils.rect_to_bb(bb)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
-        cv2.putText(frame, name, (x, y + h), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
-        
-        #out.write(frame)
-        cv2.imshow('frame',frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    
-    
+    if not bbs:
+        cv2.imwrite(os.path.join(os.path.join(args.temp_img,'worked'),'frame'+str(f_no)+'.jpg'),frame)   
+    else:
+        for (i, bb) in enumerate(bbs):
+            #cv2.imshow("frame",rect)
+            #embedding = embedding(rect)
+            alignedFace = align.align(96, frame, bb,
+                                          landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
+            embedding = net.forward(alignedFace)
+            name = face_utils.who_is_it(face_database,embedding)
+            
+            (x,y,w,h) = face_utils.rect_to_bb(bb)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+            cv2.putText(frame, name, (x, y + h), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
+            
+            cv2.imwrite(os.path.join(os.path.join(args.temp_img,'worked'),'frame'+str(f_no)+'.jpg'),frame)
+            
 
 
-    
-# When everything done, release the capture
-cap.release()
-# out.release()
+face_utils.images_to_video()
+
 cv2.destroyAllWindows()
-

@@ -1,19 +1,12 @@
-import openface
+import numpy as np
 import cv2
-import dlib
-
-import argparse
 import os
-import numpy as np 
-
-import imutils
-
-from face_utils import Face_utils
-
+import argparse
 import pandas as pd
-
-
-
+from face_utils import Face_utils
+import openface
+import dlib
+ 
 
 
 fileDir = os.path.expanduser("~/openface")
@@ -33,9 +26,7 @@ parser.add_argument('--networkModel', type=str, help="Path to Torch network mode
 parser.add_argument('--imgDim', type=int,
                     help="Default image dimension.", default=96)
 
-parser.add_argument('-i','--img',type = str, help = "Path to image file")
-
-parser.add_argument('-o','--out',type = str, help = "Path to output where you want the output")
+parser.add_argument('-v','--vid',type = str, help = "Path to video file")
 
 parser.add_argument('--verbose', action='store_true')
 
@@ -55,30 +46,5 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 net = openface.TorchNeuralNet(args.networkModel)
 detector = dlib.get_frontal_face_detector()
 
-# load image
-frame = cv2.imread(args.img)
 
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-rects = detector(gray,1)
-
-bbs = align.getAllFaceBoundingBoxes(frame)
-for (i, bb) in enumerate(bbs):
-    alignedFace = align.align(96, frame, bb,
-                                  landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-    embedding = net.forward(alignedFace)
-    name = face_utils.who_is_it(face_database,embedding)
-    
-    (x,y,w,h) = face_utils.rect_to_bb(bb)
-    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
-    cv2.putText(frame, name, (x, y + h), font, 3, (255, 255, 255), 2, cv2.LINE_AA)
-cv2.imwrite(args.out,frame)
-frame = cv2.resize(frame,(800,600))    
-cv2.imshow('frame',frame)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
-    
-
+face_utils.video_to_images(args.vid)

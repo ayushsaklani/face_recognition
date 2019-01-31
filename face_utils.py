@@ -4,6 +4,7 @@ import dlib
 
 import argparse
 import os
+import shutil
 import numpy as np 
 
 import imutils
@@ -68,34 +69,6 @@ class Face_utils:
         return dist
 
 
-    ### database 
-    def database_dict_gen(self):
-        path_data = 'images/database'
-        print("generating database")
-        img_list = os.listdir(path_data)
-        print(img_list)
-        face_database = {}
-        for i in img_list:
-            input_img = img_load(i, path = path_data)
-            input_img = imutils.resize(input_img,width = 500)
-            face_database[i.replace('.jpg', '')] = embedding(input_img)
-        return face_database
-
-    #### who _is _it
-    # def who_is_it(self,database, embedding):
-    #     min_dist = 100
-    #     for (name, db_enc) in database.items():
-    #         dist = distance(database[name], embedding, distance_metric = 0)
-    #         if dist < min_dist:
-    #             min_dist = dist
-    #             iden = name
-    #     if min_dist > 0.9:
-    #         identity = "Not in Database"
-    #     else :
-    #         identity = iden
-
-    #     return identity
-
     def who_is_it(self,database,embedding):
         min_dist =100
         for name in database.index:
@@ -109,4 +82,55 @@ class Face_utils:
             identity = iden
         return identity
 
-    ### custom funvtions end
+    def video_to_images(self,vid,path=".temp"):
+        self.image_path = os.path.join(path,'images')
+        self.worked_path = os.path.join(path,'worked')
+        if os.path.exists(self.image_path) is True:
+            shutil.rmtree(self.image_path)
+            os.mkdir(self.image_path)
+        else:
+            os.mkdir(self.image_path)
+
+        if os.path.exists(self.worked_path) is True:
+            shutil.rmtree(self.worked_path)
+            os.mkdir(self.worked_path)
+        else:
+            os.mkdir(self.worked_path)
+                
+
+        cap = cv2.VideoCapture(vid)
+        i= 0
+        while(True):
+            # Capture frame-by-frame
+            ret, frame = cap.read()
+            if ret == True:
+                cv2.imwrite(self.image_path+"/frame"+str(i)+'.jpg',frame)
+                i = i+1
+                if i%100 == 0:
+                    print("Frame"+str(i)+" saved")
+            # print("Last Frame () is saved",format(str(i)))
+            else:
+                break
+
+        # Display the resulting frame
+    
+
+        # When everything done, release the capture
+        cap.release()
+        cv2.destroyAllWindows()
+
+    def images_to_video(self ,out_name = 'video.avi'):
+        
+        images = ["frame"+str(i)+'.jpg' for i in range(len(os.listdir(self.image_path))) ]
+        
+        frame = cv2.imread(os.path.join(self.image_path, images[0]))
+        height, width, layers = frame.shape
+
+        video = cv2.VideoWriter(out_name, 0, 24, (width,height))
+
+        for image in images:
+            video.write(cv2.imread(os.path.join(self.worked_path,image)))
+            print(image)   
+        cv2.destroyAllWindows()
+        video.release()
+            ### custom funvtions end
