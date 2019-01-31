@@ -61,7 +61,7 @@ face_utils.video_to_images(args.vid)
 
 images = len(os.listdir(os.path.join(args.temp_img,'images')))
 font = cv2.FONT_HERSHEY_SIMPLEX
-print("no of images {}",format(images))
+# print("no of images {}",format(images))
 for f_no in range(0,images):
     frame = cv2.imread(os.path.join(os.path.join(args.temp_img,'images'),'frame'+str(f_no)+'.jpg'))
     print(f_no)

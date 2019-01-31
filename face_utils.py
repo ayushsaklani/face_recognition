@@ -130,7 +130,7 @@ class Face_utils:
 
         for image in images:
             video.write(cv2.imread(os.path.join(self.worked_path,image)))
-            print(image)   
+           
         cv2.destroyAllWindows()
         video.release()
             ### custom funvtions end
