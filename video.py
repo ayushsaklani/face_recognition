@@ -11,6 +11,7 @@ import imutils
 from face_utils import Face_utils
 
 import pandas as pd
+from tqdm import tqdm
 
 
 
@@ -57,36 +58,36 @@ net = openface.TorchNeuralNet(args.networkModel)
 detector = dlib.get_frontal_face_detector()
 
 
-face_utils.video_to_images(args.vid)
+frame_count = face_utils.video_to_images(args.vid)
 
-images = len(os.listdir(os.path.join(args.temp_img,'images')))
 font = cv2.FONT_HERSHEY_SIMPLEX
-# print("no of images {}",format(images))
-for f_no in range(0,images):
-    frame = cv2.imread(os.path.join(os.path.join(args.temp_img,'images'),'frame'+str(f_no)+'.jpg'))
-    print(f_no)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    rects = detector(gray,1)
 
-    bbs = align.getAllFaceBoundingBoxes(frame)
-    
-    if not bbs:
-        cv2.imwrite(os.path.join(os.path.join(args.temp_img,'worked'),'frame'+str(f_no)+'.jpg'),frame)   
-    else:
-        for (i, bb) in enumerate(bbs):
-            #cv2.imshow("frame",rect)
-            #embedding = embedding(rect)
-            alignedFace = align.align(96, frame, bb,
-                                          landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-            embedding = net.forward(alignedFace)
-            name = face_utils.who_is_it(face_database,embedding)
-            
-            (x,y,w,h) = face_utils.rect_to_bb(bb)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
-            cv2.putText(frame, name, (x, y + h), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
-            
-            cv2.imwrite(os.path.join(os.path.join(args.temp_img,'worked'),'frame'+str(f_no)+'.jpg'),frame)
-            
+with tqdm(total = frame_count, desc = "Processing Video File", dynamic_ncols = True,unit ='frames') as bar:
+    for f_no in range(0,frame_count):
+        frame = cv2.imread(os.path.join(os.path.join(args.temp_img,'images'),'frame'+str(f_no)+'.jpg'))
+        
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        rects = detector(gray,1)
+
+        bbs = align.getAllFaceBoundingBoxes(frame)
+        
+        if not bbs:
+            cv2.imwrite(os.path.join(os.path.join(args.temp_img,'worked'),'frame'+str(f_no)+'.jpg'),frame)   
+        else:
+            for (i, bb) in enumerate(bbs):
+                #cv2.imshow("frame",rect)
+                #embedding = embedding(rect)
+                alignedFace = align.align(96, frame, bb,
+                                              landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
+                embedding = net.forward(alignedFace)
+                name = face_utils.who_is_it(face_database,embedding)
+                
+                (x,y,w,h) = face_utils.rect_to_bb(bb)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                cv2.putText(frame, name, (x, y + h), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
+                
+                cv2.imwrite(os.path.join(os.path.join(args.temp_img,'worked'),'frame'+str(f_no)+'.jpg'),frame)
+        bar.update(1)       
 
 
 face_utils.images_to_video()

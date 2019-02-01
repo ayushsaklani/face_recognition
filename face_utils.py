@@ -8,6 +8,8 @@ import shutil
 import numpy as np 
 
 import imutils
+import click
+from tqdm import tqdm
 
 
 
@@ -21,6 +23,7 @@ class Face_utils:
         self.dlibFacePredictor = os.path.join(self.dlibModelDir, "shape_predictor_68_face_landmarks.dat")
         self.networkModel = os.path.join(self.openfaceModelDir, 'nn4.small2.v1.t7')
         self.imgDim = 96
+
 
 
 
@@ -100,18 +103,20 @@ class Face_utils:
 
         cap = cv2.VideoCapture(vid)
         i= 0
-        while(True):
-            # Capture frame-by-frame
-            ret, frame = cap.read()
-            if ret == True:
-                cv2.imwrite(self.image_path+"/frame"+str(i)+'.jpg',frame)
-                i = i+1
-                if i%100 == 0:
-                    print("Frame"+str(i)+" saved")
-            # print("Last Frame () is saved",format(str(i)))
-            else:
-                break
-
+        self.frame_count    = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.fps    = cap.get(cv2.CAP_PROP_FPS)
+        
+        with tqdm(total =self.frame_count,desc ="Reading Video File",dynamic_ncols =True, unit = 'frames') as bar:
+            while(True):
+                # Capture frame-by-frame
+                ret, frame = cap.read()
+                if ret == True:
+                    cv2.imwrite(self.image_path+"/frame"+str(i)+'.jpg',frame)
+                    i = i+1
+                    bar.update(1)
+                else:
+                    break
+        return self.frame_count
         # Display the resulting frame
     
 
@@ -121,16 +126,17 @@ class Face_utils:
 
     def images_to_video(self ,out_name = 'video.avi'):
         
-        images = ["frame"+str(i)+'.jpg' for i in range(len(os.listdir(self.image_path))) ]
+        images = ["frame"+str(i)+'.jpg' for i in range(self.frame_count) ]
         
         frame = cv2.imread(os.path.join(self.image_path, images[0]))
         height, width, layers = frame.shape
 
-        video = cv2.VideoWriter(out_name, 0, 24, (width,height))
+        video = cv2.VideoWriter(out_name, 0, self.fps, (width,height))
 
         for image in images:
             video.write(cv2.imread(os.path.join(self.worked_path,image)))
            
         cv2.destroyAllWindows()
         video.release()
+        click.launch(out_name)
             ### custom funvtions end

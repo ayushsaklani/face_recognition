@@ -110,4 +110,4 @@ img/
 video/
 .temp/
 *avi
-temp*
+**/[Tt]emp*.py
