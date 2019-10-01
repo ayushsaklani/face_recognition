@@ -43,6 +43,6 @@ To run it make sure above Prerequsites are installed and working properly. Clone
 
 * Hat tip to anyone whose code was used. 
 * Openface[https://cmusatyalab.github.io/] for pretrained models.
-* Inspiration
+* Inspiration. 
 
 
